@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "city_pulse"
+version = "0.1.0"
+description = "City Info Visualizer"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "dee", email = "123602432+boolYikes@users.noreply.github.com" }
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.3"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
