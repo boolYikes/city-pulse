@@ -25,3 +25,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+extend-exclude = ["__pycache__", "build", "dist", "venv", ".venv", "env", ".env", "*.md"]

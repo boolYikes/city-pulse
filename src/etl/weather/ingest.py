@@ -7,19 +7,15 @@ from __future__ import annotations
 import json
 from typing import List
 
-import requests
 
-from etl.common import DotDict
-from etl.common import Config
+from etl.common import DotDict, Config, make_request
 
 
 def run_weather_job(lat: float, lon: float, dev=True):
     WEATHER_URL = f"https://api.weather.gov/points/{lat},{lon}"
-    HEADERS = {"User-Agent": "CityPulsePoC/0.1 (Ad Hoc)"}
 
-    weather_res = requests.get(WEATHER_URL, headers=HEADERS)
-    weather_res.raise_for_status()
-    weather = DotDict(weather_res.json())
+    weather_res = make_request(WEATHER_URL)
+    weather = DotDict(weather_res)
 
     sunrise = weather.properties.astronomicalData.sunrise
     sunset = weather.properties.astronomicalData.sunset
@@ -28,9 +24,8 @@ def run_weather_job(lat: float, lon: float, dev=True):
     tz = weather.properties.timeZone
     forecast_url = weather.properties.forecast
 
-    forecast_res = requests.get(forecast_url, headers=HEADERS)
-    forecast_res.raise_for_status()
-    forecast = DotDict(forecast_res.json())
+    forecast_res = make_request(forecast_url)
+    forecast = DotDict(forecast_res)
 
     updated_at = forecast.properties.updateTime
     periods: List = forecast.properties.periods
