@@ -47,7 +47,7 @@ def config():
     return config
 
 
-@pytest.fixture
+@pytest.fixture(scope="session", autouse=True)
 def create_bucket(config):
     config.client.create_bucket(Bucket=BUCKET_NAME)
     yield

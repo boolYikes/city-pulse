@@ -112,7 +112,9 @@ def run_openaq_ingestion(config: ETLConfig) -> list[str]:
                 continue
 
             OPENAQ_MEASUREMENT_URL = f"https://api.openaq.org/v3/sensors/{sensor_id}/measurements/hourly?datetime_from={now}"
-            measurement_res = make_request(OPENAQ_MEASUREMENT_URL)
+            measurement_res = make_request(
+                OPENAQ_MEASUREMENT_URL, api_key=config.openaq_api_key
+            )
             # if not found, go back in time until there is result
             if measurement_res["meta"]["found"] == 0:
                 dt = datetime.strptime(now, "%Y-%m-%dT%H:%M:%SZ").replace(
