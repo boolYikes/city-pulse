@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 import json
 from typing import TYPE_CHECKING
