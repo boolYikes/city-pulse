@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Start MinIO
         run: |
-          docker un -d --name minio \
+          docker run -d --name minio \
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minio_test \
             -e MINIO_ROOT_PASSWORD=minio_test \
