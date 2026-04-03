@@ -51,4 +51,6 @@ def config():
 def create_bucket(config):
     config.client.create_bucket(Bucket=BUCKET_NAME)
     yield
-    config.client.delete_bucket(Bucket=BUCKET_NAME)
+    b = config.client.Bucket(BUCKET_NAME)
+    b.objects.all().delete()
+    b.delete()
