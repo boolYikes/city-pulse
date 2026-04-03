@@ -11,29 +11,30 @@ jobs:
     if: github.event_name == 'pull_request' && !contains(github.event.pull_request.title, '[skip ci]')
     runs-on: ubuntu-latest
 
-    services:
-      minio:
-        image: minio/minio:latest
-        ports:
-          - 9000:9000
-        env:
-          MINIO_ROOT_USER: minio_test
-          MINIO_ROOT_PASSWORD: minio_test
-        options: >-
-          minio server /data
-          --health-cmd "curl -f http://localhost:9000/minio/health/live"
-          --health-interval 10s
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
+      - name: Start MinIO
+        run: |
+          docker un -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minio_test \
+            -e MINIO_ROOT_PASSWORD=minio_test \
+            minio/minio:latest server /data
+
+      - name: Wait for MinIO
+        run: |
+          for i in {1..30}; do
+            curl -f http://localhost:9000/minio/health/live && exit 0
+            sleep 2
+          done
+          docker logs minio
+          exit 1
+
       - uses: actions/checkout@v6
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
