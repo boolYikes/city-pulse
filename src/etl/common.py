@@ -1,6 +1,10 @@
 from pathlib import Path
 from datetime import datetime, timezone
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from etl.config import ETLConfig
 
 
 # for dot operator enabling
@@ -27,8 +31,33 @@ def make_request(url: str, api_key: str = ""):
 
 
 # for local only
-def check_file_exists(path: str, base_name: str) -> bool:
-    return (Path(path) / f"{base_name}.json").exists()
+def check_file_exists(path: str, config: ETLConfig) -> bool:
+    """
+    Checks if file exists in s3 or locally based on environment
+    """
+    if config.is_prod:
+        obj = get_s3_object(config.client, bucket=config.bucket, key=path)
+        return obj is not None
+    return Path(path).exists()
+
+
+def write_file(path: str, data: bytes, config: ETLConfig):
+    if config.is_prod:
+        put_s3_object(config.client, bucket=config.bucket, key=path, data=data)
+    else:
+        with open(path, "wb") as f:
+            f.write(data)
+
+
+def read_file(path: str, config: ETLConfig) -> bytes:
+    if config.is_prod:
+        obj = get_s3_object(config.client, bucket=config.bucket, key=path)
+        if obj is None:
+            raise FileNotFoundError(f"File {path} not found in bucket {config.bucket}")
+        return obj
+    else:
+        with open(path, "rb") as f:
+            return f.read()
 
 
 def get_s3_client(s3_config):
@@ -89,3 +118,27 @@ def to_key_string(dt_string: str):
     dt = datetime.fromisoformat(dt_string.replace("Z", "+00:00"))
     converted = dt.strftime("year=%Y/month=%m/day=%d %H-%M-%S")
     return converted.split()
+
+
+def is_valid_event(event: dict) -> bool:
+    required_keys = {"log_level", "city", "lat", "lon", "ts", "rad", "BUCKET"}
+    if not required_keys.issubset(event.keys()):
+        return False
+
+    # type validation
+    if not isinstance(event["log_level"], str):
+        return False
+    if not isinstance(event["city"], str):
+        return False
+    if not isinstance(event["lat"], (int, float)):
+        return False
+    if not isinstance(event["lon"], (int, float)):
+        return False
+    if event["ts"] is not None and not isinstance(event["ts"], str):
+        return False
+    if not isinstance(event["rad"], int):
+        return False
+    if not isinstance(event["BUCKET"], str):
+        return False
+
+    return True

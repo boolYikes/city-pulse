@@ -19,7 +19,7 @@ def config():
         city=CITY,
         lat=LAT,
         lon=LON,
-        ts="",
+        ts="2026-04-03T14:27:00Z",
         rad=12000,
         bucket="test-bucket",
         pipeline="test-bronze",

@@ -46,12 +46,12 @@ def run_weather_job(config: ETLConfig):
 
     # save result
     dt, ts = to_key_string(updated_at)
-    filename = f"{config.city}_{ts}.json"
+    filename = f"{ts}.json"
 
     if config.is_prod:
         from etl.common import put_s3_object
 
-        key = join(config.pipeline, dt, filename)
+        key = join(config.pipeline, f"city={config.city}", dt, filename)
         put_s3_object(
             config.client,
             config.bucket,

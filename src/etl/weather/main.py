@@ -3,7 +3,10 @@ from etl.config import init
 
 
 def extract_handler(event, context):
-    config = init()
+    """
+    log_level, city, lat, lon, bucket must be passed in event.
+    """
+    config = init(event)
     run_weather_job(config)
     return {"statusCode": 200, "body": "ok"}
 

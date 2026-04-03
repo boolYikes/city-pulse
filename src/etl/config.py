@@ -10,7 +10,7 @@ class ETLConfig:
         city: str,
         lat: float,
         lon: float,
-        ts: str,
+        ts: str,  # used in openaq api query. passed from eventbridge event
         rad: int,
         # used in key and path
         bucket: str,
@@ -35,27 +35,33 @@ class ETLConfig:
         self.s3_config = s3_config or {}
 
 
-def init():
+def init(event: dict) -> ETLConfig:
     """
-    Dotenv was not used to minimize footprint and security
+    Dotenv was not used to minimize footprint and for security
     So on local setup, you need to run it from a script.
     """
     import os
 
-    from etl.common import get_environment, get_s3_client
+    from etl.common import get_environment, get_s3_client, is_valid_event
 
     is_prod = get_environment()
 
+    if not is_valid_event(event):
+        raise ValueError(
+            "Invalid event. Required keys: log_level, city, lat, lon, ts(optional), rad(optional), bucket"
+        )
+
     config = ETLConfig(
-        log_level=os.environ.get("LOG_LEVEL"),
-        city=os.environ.get("CITY"),
-        lat=os.environ.get("LAT"),
-        lon=os.environ.get("LON"),
-        ts=os.environ.get("TS"),
-        rad=os.environ.get("RAD"),
-        bucket=os.environ.get("BUCKET"),
+        log_level=event["log_level"],
+        city=event["city"],
+        lat=event["lat"],
+        lon=event["lon"],
+        ts=event.get("ts", None),
+        rad=event.get("rad", 12000),
+        bucket=event["BUCKET"],
+        # These need environment variables
         pipeline=os.environ.get("PIPELINE"),
-        openaq_api_key=os.environ.get("OPENAQ_API_KEY"),
+        openaq_api_key=os.environ.get("OPENAQ_API_KEY", None),
         s3_config={
             "endpoint_url": os.environ.get("S3_ENDPOINT_URL"),
             "aws_access_key_id": os.environ.get("S3_ACCESS_KEY_ID"),
