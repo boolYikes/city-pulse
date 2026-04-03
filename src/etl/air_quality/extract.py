@@ -1,25 +1,35 @@
-from etl.common import Config, DotDict, make_request, check_file_exists
-import json
-from datetime import datetime, timezone, timedelta
+from __future__ import annotations
 import time
-# use radius quary: ?coordinates=35.14942,136.90610&radius=12000
+import json
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from etl.config import ETLConfig
+
+from etl.common import (
+    DotDict,
+    make_request,
+    check_file_exists,
+    write_file,
+    read_file,
+    to_key_string,
+)
+from datetime import datetime, timezone, timedelta
 
 
-def run_openaq_ingestion(
-    city: str, lat: float, lon: float, rad: int = 12000, ts: str | None = None
-):
+def run_openaq_ingestion(config: ETLConfig) -> list[str]:
     """
     ts: ISO 8601 format, e.g. 2023-01-31T23:59:59Z / passed by Step Functions
+    Returns path to the file in s3 or local
     """
 
-    # Use cache first
-    if not check_file_exists(Config.dev_storage_path, city):
+    # Use cache first for the meta data since it doesn't change often.
+    path = f"{config.pipeline}/city={config.city}/meta_openaq.json"
+    if not check_file_exists(path, config):
         # radius is in meters
-        OPENAQ_URL = (
-            f"https://api.openaq.org/v3/locations?coordinates={lat},{lon}&radius={rad}"
-        )
+        OPENAQ_URL = f"https://api.openaq.org/v3/locations?coordinates={config.lat},{config.lon}&radius={config.rad}"
 
-        openaq_res = make_request(OPENAQ_URL)
+        openaq_res = make_request(OPENAQ_URL, api_key=config.openaq_api_key)
         aqs = DotDict(openaq_res).results
 
         # 1. extract sensor ids and then query sensor measurement
@@ -49,11 +59,9 @@ def run_openaq_ingestion(
                 aqs,
             )
         )
-        with open(Config.dev_storage_path / f"{city}.json", "w") as f:
-            json.dump(aqs_transformed, f)
+        write_file(path, json.dumps(aqs_transformed).encode("utf-8"), config)
     else:
-        with open(Config.dev_storage_path / f"{city}.json", "r") as f:
-            aqs_transformed = json.load(f)
+        aqs_transformed = json.loads(read_file(path, config))
 
     # 2. get measurement
     # https://api.openaq.org/v3/sensors/{sensors_id}/measurements/hourly?datetime_from=2023-01-01T00:00:00Z&datetime_to=2023-01-31T23:59:59Z
@@ -68,6 +76,7 @@ def run_openaq_ingestion(
     # and around 12k radius it probably wouldn't be meaningful
     # for aq in aqs_transformed:
     aq = aqs_transformed[0]
+    results = []
     for sensor in aq["sensors"]:
         sensor_id = sensor["id"]
 
@@ -77,14 +86,15 @@ def run_openaq_ingestion(
         sensors_done.add(sensor_id)
 
         # floor the time to nearest hour
-        if ts is None:
+        if config.ts is None:
+            # just in case ts was not passed
             now = (
                 datetime.now(timezone.utc)
                 .replace(minute=0, second=0, microsecond=0)
                 .strftime("%Y-%m-%dT%H:%M:%SZ")
             )
         else:
-            dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+            dt = datetime.strptime(config.ts, "%Y-%m-%dT%H:%M:%SZ").replace(
                 tzinfo=timezone.utc
             )
             dt = dt.replace(minute=0, second=0, microsecond=0)
@@ -94,13 +104,17 @@ def run_openaq_ingestion(
         while not found:
             # check cache
             # local only. use time-based partition key. e.g., 2026/03/31
-            file_name = f"{city}_{sensor_id}_{now}.json"
-            if check_file_exists(Config.dev_storage_path, file_name):
+            key_style_dt, ts = to_key_string(now)
+            filename = f"{sensor_id}_{ts}.json"
+            key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{filename}"
+            if check_file_exists(key, config):
                 found = True
                 continue
 
             OPENAQ_MEASUREMENT_URL = f"https://api.openaq.org/v3/sensors/{sensor_id}/measurements/hourly?datetime_from={now}"
-            measurement_res = make_request(OPENAQ_MEASUREMENT_URL)
+            measurement_res = make_request(
+                OPENAQ_MEASUREMENT_URL, api_key=config.openaq_api_key
+            )
             # if not found, go back in time until there is result
             if measurement_res["meta"]["found"] == 0:
                 dt = datetime.strptime(now, "%Y-%m-%dT%H:%M:%SZ").replace(
@@ -143,5 +157,6 @@ def run_openaq_ingestion(
         )
 
         # 3. save to s3
-        with open(Config.dev_storage_path / file_name, "w") as f:
-            json.dump(payload, f)
+        write_file(key, json.dumps(payload).encode("utf-8"), config)
+        results.append(key)
+    return results
