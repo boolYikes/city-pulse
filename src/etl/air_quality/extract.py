@@ -29,7 +29,7 @@ def run_openaq_ingestion(config: ETLConfig) -> list[str]:
         # radius is in meters
         OPENAQ_URL = f"https://api.openaq.org/v3/locations?coordinates={config.lat},{config.lon}&radius={config.rad}"
 
-        openaq_res = make_request(OPENAQ_URL)
+        openaq_res = make_request(OPENAQ_URL, api_key=config.openaq_api_key)
         aqs = DotDict(openaq_res).results
 
         # 1. extract sensor ids and then query sensor measurement

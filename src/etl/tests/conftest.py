@@ -3,6 +3,8 @@ import pytest
 
 from etl.config import ETLConfig
 
+BUCKET_NAME = "test-bucket"
+
 
 @pytest.fixture
 def config():
@@ -21,7 +23,7 @@ def config():
         lon=LON,
         ts="2026-04-03T14:27:00Z",
         rad=12000,
-        bucket="test-bucket",
+        bucket=BUCKET_NAME,
         pipeline="test-bronze",
         openaq_api_key=os.getenv("OPENAQ_API_KEY"),  # error on missing key
         is_prod=True,  # This is for testing S3 client, not for local file system
@@ -43,3 +45,10 @@ def config():
     )
 
     return config
+
+
+@pytest.fixture
+def create_bucket(config):
+    config.client.create_bucket(Bucket=BUCKET_NAME)
+    yield
+    config.client.delete_bucket(Bucket=BUCKET_NAME)
