@@ -6,7 +6,7 @@ from etl.config import ETLConfig
 BUCKET_NAME = "test-bucket"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def config():
     """
     Config determines the S3 client
