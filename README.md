@@ -1,7 +1,7 @@
 <!--
 ---
 name: City Pulse
-date: 2026-03-31
+date: 2026-04-04
 tags: [python, aws]
 summary: City info aggregator
 ---
@@ -130,10 +130,7 @@ Deployment
 
 <summary>Notes</summary>
 
-</details>
-
-<details>
-
-<summary>Todos</summary>
+- Implemented retry logic to OpenAQ so it covers the cases where some sensors are late on updates, by going back in time with 1 hour step, 
+- But this doesn't solve the fact that AQ lags behind the OpenWeather updates. Sensors might update at different intervals at different times but in any case I need a way to normalize that
 
 </details>

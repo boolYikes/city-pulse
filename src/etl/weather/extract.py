@@ -46,7 +46,7 @@ def run_weather_job(config: ETLConfig):
 
     # save result
     dt, ts = to_key_string(updated_at)
-    filename = f"{ts}.json"
+    filename = f"fc_openweather_{ts}.json"
 
     if config.is_prod:
         from etl.common import put_s3_object
