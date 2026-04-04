@@ -105,7 +105,7 @@ def run_openaq_ingestion(config: ETLConfig) -> list[str]:
             # check cache
             # local only. use time-based partition key. e.g., 2026/03/31
             key_style_dt, ts = to_key_string(now)
-            filename = f"{sensor_id}_{ts}.json"
+            filename = f"aq_{sensor_id}_{ts}.json"
             key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{filename}"
             if check_file_exists(key, config):
                 found = True

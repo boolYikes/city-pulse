@@ -7,14 +7,18 @@ on:
 
 jobs:
   ci:
-    # only run on pull requests and skip if pr title contains [skip ci]
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.title, '[skip ci]')
+    # only run on merge to main or if the PR title does not contain '[skip ci]'
+    # this allows me to upload the coverage report to codecov on merge
+    # also helps with the ci pass badges
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Start MinIO
         run: |
-          docker run -d --name minio \
+          docker run -d --rm --name minio \
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minio_test \
             -e MINIO_ROOT_PASSWORD=minio_test \

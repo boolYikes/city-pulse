@@ -50,14 +50,15 @@ def config():
 @pytest.fixture(scope="session", autouse=True)
 def bucket_provider(config):
     config.client.create_bucket(Bucket=BUCKET_NAME)
-    yield
-    s3 = boto3.resource(
-        "s3",
-        endpoint_url=config.s3_config["endpoint_url"],
-        aws_access_key_id=config.s3_config["aws_access_key_id"],
-        aws_secret_access_key=config.s3_config["aws_secret_access_key"],
-        region_name=config.s3_config["region_name"],
-    )
-    b = s3.Bucket(BUCKET_NAME)
-    b.objects.all().delete()
-    config.client.delete_bucket(Bucket=BUCKET_NAME)
+    # both on local and workflow, below is done automatically so commenting out for now
+    # yield
+    # s3 = boto3.resource(
+    #     "s3",
+    #     endpoint_url=config.s3_config["endpoint_url"],
+    #     aws_access_key_id=config.s3_config["aws_access_key_id"],
+    #     aws_secret_access_key=config.s3_config["aws_secret_access_key"],
+    #     region_name=config.s3_config["region_name"],
+    # )
+    # b = s3.Bucket(BUCKET_NAME)
+    # b.objects.all().delete()
+    # config.client.delete_bucket(Bucket=BUCKET_NAME)
