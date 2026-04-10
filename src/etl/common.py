@@ -43,6 +43,9 @@ def check_file_exists(path: str, config: ETLConfig) -> bool:
 
 
 def write_file(path: str, data: bytes, config: ETLConfig):
+    """
+    Path in key-like format
+    """
     if config.is_prod:
         put_s3_object(config.client, bucket=config.bucket, key=path, data=data)
     else:
@@ -51,6 +54,9 @@ def write_file(path: str, data: bytes, config: ETLConfig):
 
 
 def read_file(path: str, config: ETLConfig) -> bytes:
+    """
+    Path in key-like format
+    """
     if config.is_prod:
         obj = get_s3_object(config.client, bucket=config.bucket, key=path)
         if obj is None:
@@ -72,6 +78,7 @@ def get_s3_object(client, bucket: str, key: str):
 
     try:
         response = client.get_object(Bucket=bucket, Key=key)
+        # json.loads() assumes utf-8 later so .decode() is omitted
         return response["Body"].read()
     except ClientError as e:
         print(f"Error fetching object {key} from bucket {bucket}: {e}")

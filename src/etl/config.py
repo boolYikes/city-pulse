@@ -21,6 +21,11 @@ class ETLConfig:
         client=None,
         s3_config: dict = None,
     ):
+        """
+        ts example: 2026-04-03T14:27:00Z
+        """
+        import logging
+
         self.log_level = log_level
         self.city = city
         self.lat = lat
@@ -33,6 +38,8 @@ class ETLConfig:
         self.is_prod = is_prod
         self.client = client
         self.s3_config = s3_config or {}
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
 
 def init(event: dict) -> ETLConfig:

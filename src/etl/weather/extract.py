@@ -1,6 +1,15 @@
 """
+It's a forecast so no backfill.
+---
+But https://api.weather.gov/stations/{StationId}/observations?start={StartTime}&end={EndTime}
+-can be used to get local observations for the time period but the schema is different.
+Just FYI.
+---
+I'll stick to the no-backfill forecast for the time being because the focus is city pulse.
+This script handles light transformation as well and basically that is the final schema I need.
+---
 The functions parameterizes the location but it's not meant to be fully dynamic,
-meaning that cities outside the US must be PoC-ed anew because it is highly probable that the schema is different
+meaning that newly added cities must be PoC-ed anew.
 """
 
 from __future__ import annotations
@@ -46,7 +55,7 @@ def run_weather_job(config: ETLConfig):
 
     # save result
     dt, ts = to_key_string(updated_at)
-    filename = f"fc_openweather_{ts}.json"
+    filename = f"fc_openweather_{updated_at.split('T')[0]}_{ts}.json"
 
     if config.is_prod:
         from etl.common import put_s3_object
