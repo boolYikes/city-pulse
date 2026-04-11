@@ -9,6 +9,7 @@ BUCKET_NAME = "test-bucket"
 @pytest.fixture(scope="session")
 def config():
     """
+    This helps skip the init() of the config
     Config determines the S3 client
     """
     import os

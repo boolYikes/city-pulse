@@ -26,4 +26,4 @@ docker run -d --rm \
      fi
  done
 
-.venv/bin/python -m pytest -v
+.venv/bin/python -m pytest -v -s --log-cli-level=INFO

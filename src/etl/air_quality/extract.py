@@ -105,18 +105,31 @@ def run_openaq_ingestion(config: ETLConfig) -> list[str]:
             # check cache
             # local only. use time-based partition key. e.g., 2026/03/31
             key_style_dt, ts = to_key_string(now)
-            filename = f"aq_{sensor_id}_{ts}.json"
+            filename = f"aq_{sensor_id}_{now.split('T')[0]}_{ts}.json"
             key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{filename}"
             if check_file_exists(key, config):
                 found = True
                 continue
 
-            OPENAQ_MEASUREMENT_URL = f"https://api.openaq.org/v3/sensors/{sensor_id}/measurements/hourly?datetime_from={now}"
+            # compute one hour later from "now"
+            end = (
+                datetime.strptime(now, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc
+                )
+                + timedelta(hours=1)
+            ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            OPENAQ_MEASUREMENT_URL = f"https://api.openaq.org/v3/sensors/{sensor_id}/measurements/hourly?datetime_from={now}&datetime_to={end}"
             measurement_res = make_request(
                 OPENAQ_MEASUREMENT_URL, api_key=config.openaq_api_key
             )
             # if not found, go back in time until there is result
             if measurement_res["meta"]["found"] == 0:
+                config.logger.info(
+                    {
+                        "message": f"Data with specified timestamp {now} to {end} not found. Iterating backwards."
+                    }
+                )
                 dt = datetime.strptime(now, "%Y-%m-%dT%H:%M:%SZ").replace(
                     tzinfo=timezone.utc
                 )
