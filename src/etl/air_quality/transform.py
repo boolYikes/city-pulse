@@ -21,8 +21,8 @@ def run_openaq_transform(keys: list[str], config: ETLConfig):
     data = [json.loads(read_file(key, config)) for key in keys]
 
     # each dataset should contain 1 row
-    if any(map(lambda p: len(p[0]) != 1, data)):
-        raise Exception("Number of rows among datasets do not match!")
+    if any(map(lambda p: len(p) != 1, data)):
+        raise Exception(f"Number of rows among datasets do not match!: {data}")
 
     # parse facts
     # Don't keep fact wide.
@@ -73,7 +73,7 @@ def run_openaq_transform(keys: list[str], config: ETLConfig):
 
     key_style_dt, ts = to_key_string(now)
 
-    fact_filename = f"fact_aq_{now.split('T')[0]}_{ts}.json"
+    fact_filename = f"fact_aq_{now.split('T')[0]}_{ts}.parquet"
     fact_key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{fact_filename}"
 
     # snapshot - ish ? dim table
