@@ -1,0 +1,29 @@
+{
+  "StartAt": "Extract",
+  "States": {
+    "Extract": {
+      "Type": "Task",
+      "Resource": "${extract_arn}",
+      "ResultPath": "$.extract_result",
+      "Next": "PrepareTransform"
+    },
+    "PrepareTransform": {
+      "Type": "Pass",
+      "Parameters": {
+        "city.$": "$.city",
+        "lat.$": "$.lat",
+        "lon.$": "$.lon",
+        "log_level.$": "$.log_level",
+        "rad.$": "$.rad",
+        "BUCKET.$": "$.BUCKET",
+        "keys.$": "$.extract_result.keys"
+      },
+      "Next": "Transform"
+    },
+    "Transform": {
+      "Type": "Task",
+      "Resource": "${transform_arn}",
+      "End": true
+    }
+  }
+}

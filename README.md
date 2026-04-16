@@ -1,8 +1,8 @@
 <!--
 ---
 name: City Pulse
-date: 2026-04-13
-tags: [python, aws]
+date: 2026-04-16
+tags: [python, aws, terraform, githubactions]
 summary: City info aggregator
 ---
 -->
@@ -194,5 +194,6 @@ Deployment
 
 - [x] Implemented retry logic to OpenAQ so it covers the cases where some sensors are late on updates, by going back in time with 1 hour step, 
 - [ ] Use If-None-Match systax in s3 client
+- [ ] Use other secret management method other than just ignoring the tfvars
 
 </details>

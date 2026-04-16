@@ -1,5 +1,5 @@
 from etl.air_quality.extract import run_openaq_ingestion
-from etl.air_quality.transform import run_openaq_transform
+from etl.air_quality.transform import run_openaq_transform, run_openaq_analytics
 from etl.config import init
 
 
@@ -16,6 +16,12 @@ def extract_handler(event, context):
 def transform_handler(event, context):
     config = init(event)
     keys = run_openaq_transform(event["keys"], config)
+    return {"statusCode": 200, "keys": keys}
+
+
+def transform_analytics_handler(event, context):
+    config = init(event)
+    keys = run_openaq_analytics(config)
     return {"statusCode": 200, "keys": keys}
 
 
