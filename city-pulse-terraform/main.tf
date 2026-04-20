@@ -71,7 +71,7 @@ resource "aws_lambda_function" "extract" {
   function_name = "${var.project_name}-extract"
   role          = local.lambda_role_arn
   handler       = "handler.extract_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.12"
 
   filename         = "lambda/extract.zip"
   source_code_hash = filebase64sha256("lambda/extract.zip")
@@ -89,7 +89,7 @@ resource "aws_lambda_function" "transform" {
   function_name = "${var.project_name}-transform"
   role          = local.lambda_role_arn
   handler       = "handler.transform_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.12"
 
   filename         = "lambda/transform.zip"
   source_code_hash = filebase64sha256("lambda/transform.zip")

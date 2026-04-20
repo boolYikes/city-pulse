@@ -1,9 +1,15 @@
+# environment
 .venv/
 
+# artifacts
 **/__pycache__/
 **/*.egg*
+build/
+*.zip
 
+# raw data
 data/
 
+# secrets
 .env
 *.tfvars
