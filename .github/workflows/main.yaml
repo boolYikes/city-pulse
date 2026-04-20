@@ -39,10 +39,13 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Install dependencies
+        env:
+          PIP_DEFAULT_TIMEOUT: "60"
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           pip install -e .[dev]
 
       - name: Run tests
