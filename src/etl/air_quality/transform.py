@@ -1,5 +1,6 @@
 """
-Clean raw data processed by extract.py
+Clean raw data processed by extract.py,
+and run aggregation every day at 00:00 UTC to build analytics tables.
 """
 
 from __future__ import annotations
@@ -21,8 +22,8 @@ def run_openaq_transform(keys: list[str], config: ETLConfig):
     data = [json.loads(read_file(key, config)) for key in keys]
 
     # each dataset should contain 1 row
-    if any(map(lambda p: len(p[0]) != 1, data)):
-        raise Exception("Number of rows among datasets do not match!")
+    if any(map(lambda p: len(p) != 1, data)):
+        raise Exception(f"Number of rows among datasets do not match!: {data}")
 
     # parse facts
     # Don't keep fact wide.
@@ -73,7 +74,7 @@ def run_openaq_transform(keys: list[str], config: ETLConfig):
 
     key_style_dt, ts = to_key_string(now)
 
-    fact_filename = f"fact_aq_{now.split('T')[0]}_{ts}.json"
+    fact_filename = f"fact_aq_{now.split('T')[0]}_{ts}.parquet"
     fact_key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{fact_filename}"
 
     # snapshot - ish ? dim table
@@ -115,3 +116,52 @@ def run_openaq_transform(keys: list[str], config: ETLConfig):
     )
 
     return fact_key, dim_key
+
+
+# Intentionally put analytics aggregation in transformation step for semantic clarity,
+# but it can be completely detached from the ETL pipeline and run on its own schedule.
+def run_openaq_city_grain_analytics(config: ETLConfig):
+    """
+    Runs city-grain aggregation
+    """
+    from pyarrow.dataset import dataset
+    from pyarrow.fs import S3FileSystem
+    # load all fact data for the city
+
+    # this is more like an s3 client.
+    fs = S3FileSystem(
+        access_key=environ.get("S3_ACCESS_KEY_ID"),
+        secret_key=environ.get("S3_SECRET_ACCESS_KEY"),
+        endpoint_override=environ.get("S3_ENDPOINT_URL"),
+        region=environ.get("S3_REGION_NAME"),
+    )
+
+    fact_ds = dataset(  # noqa
+        source=f"s3://{config.bucket}/{config.pipeline}/{config.city}",
+        format="parquet",
+        filesystem=fs,
+        partitioning="hive",
+        ignore_prefixes=[".", "_", "dim_", "meta_"],
+    )
+
+    # Get the latest dim snapshot
+    dt = datetime.strptime(config.ts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    dt = dt.replace(minute=0, second=0, microsecond=0)
+    now = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    key_style_dt, ts = to_key_string(now)
+
+    dim_filename = f"dim_aq_{now.split('T')[0]}_{ts}.parquet"
+    dim_key = f"{config.pipeline}/city={config.city}/{key_style_dt}/{dim_filename}"
+
+    dim_ds = dataset(  # noqa
+        source=dim_key,
+        format="parquet",
+        filesystem=fs,
+        partitioning="hive",
+        ignore_prefixes=[".", "_", "fact_", "meta_"],
+    )
+    # NOTE: since I snapshot dims alongside facts,
+    # we don't have to worry about point in time correctness
+
+    return "temp_key1", "temp_key2"

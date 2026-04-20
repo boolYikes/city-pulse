@@ -1,8 +1,8 @@
 <!--
 ---
 name: City Pulse
-date: 2026-04-10
-tags: [python, aws]
+date: 2026-04-20
+tags: [python, aws, terraform, githubactions]
 summary: City info aggregator
 ---
 -->
@@ -20,7 +20,6 @@ City Pulse orchestrates an event-driven ETL pipeline that aggregates and process
 - Local government news
 
 ### Data Pipeline
-
 
 Pipeline flow:
 1. EventBridge schedules and triggers ingestion workflows
@@ -143,10 +142,31 @@ Serving:
 
 ## Development Setup
 
+### Local Development
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
+```
+
+### Local Integration
+```bash
+# at project root
+docker build -f lambda/Dockerfile -t <your/image> .
+# local provision: override docker run command with invocation function name to run other functions
+# the function names can be referenced from lambda/extract/handler.py and lambda/transform/handler.py
+./run_local_infra.sh
+# Lambda invocation
+curl -X POST \
+  "http://localhost:9002/2015-03-31/functions/function/invocations" \
+  -d '{
+    "log_level": "DEBUG"
+    "city": "NewYork",
+    "lat": 40.7698,
+    "lon": -73.9748,
+    "ts": "2026-04-03T14:27:00Z",
+    "rad": 12000,
+  }'
 ```
 
 ## Roadmap
@@ -194,5 +214,7 @@ Deployment
 
 - [x] Implemented retry logic to OpenAQ so it covers the cases where some sensors are late on updates, by going back in time with 1 hour step, 
 - [ ] Use If-None-Match systax in s3 client
+- [ ] Use other secret management method other than just ignoring the tfvars
+- [x] Lambda function's gotten too big. Use docker image and reuse dependencies.
 
 </details>
