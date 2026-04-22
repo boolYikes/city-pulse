@@ -3,6 +3,7 @@ import pytest
 
 from etl.config import ETLConfig
 
+
 BUCKET_NAME = "test-bucket"
 
 

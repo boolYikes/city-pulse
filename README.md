@@ -1,8 +1,8 @@
 <!--
 ---
 name: City Pulse
-date: 2026-04-10
-tags: [python, aws]
+date: 2026-04-20
+tags: [python, aws, terraform, githubactions]
 summary: City info aggregator
 ---
 -->
@@ -20,7 +20,6 @@ City Pulse orchestrates an event-driven ETL pipeline that aggregates and process
 - Local government news
 
 ### Data Pipeline
-
 
 Pipeline flow:
 1. EventBridge schedules and triggers ingestion workflows
@@ -143,10 +142,35 @@ Serving:
 
 ## Development Setup
 
+### Local Development
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
+```
+
+### Local Integration
+**.env needed**
+```bash
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_ENDPOINT_URL=
+S3_REGION_NAME=
+OPENAQ_API_KEY=
+MINIO_ROOT_USER=
+MINIO_ROOT_PASSWORD=
+IS_PROD=
+BUCKET=
+```
+
+```bash
+# at project root
+# check image names in each script to match your setup
+docker build -f lambda/Dockerfile -t <your/image> .
+
+./run_local_infra.sh
+
+./run_integration_test.sh
 ```
 
 ## Roadmap
@@ -163,11 +187,11 @@ Planning
 - Retry / DLQ strategy
 
 Implementation
-- Pipeline components
-- Ingestion (Lambda)
-- Transformation
-- Storage (S3 layout)
-- Integration tests
+- [ ] Pipeline components
+- [x] Ingestion (Lambda)
+- [x] Transformation
+- [x] Storage (S3 layout)
+- [x] Integration tests
 
 Cloud Infra
 - CloudFormation templates
@@ -194,5 +218,7 @@ Deployment
 
 - [x] Implemented retry logic to OpenAQ so it covers the cases where some sensors are late on updates, by going back in time with 1 hour step, 
 - [ ] Use If-None-Match systax in s3 client
+- [ ] Use other secret management method other than just ignoring the tfvars
+- [x] Lambda function's gotten too big. Use docker image and reuse dependencies.
 
 </details>
