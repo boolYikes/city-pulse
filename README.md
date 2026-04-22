@@ -150,23 +150,27 @@ pip install -e .[dev]
 ```
 
 ### Local Integration
+**.env needed**
+```bash
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_ENDPOINT_URL=
+S3_REGION_NAME=
+OPENAQ_API_KEY=
+MINIO_ROOT_USER=
+MINIO_ROOT_PASSWORD=
+IS_PROD=
+BUCKET=
+```
+
 ```bash
 # at project root
+# check image names in each script to match your setup
 docker build -f lambda/Dockerfile -t <your/image> .
-# local provision: override docker run command with invocation function name to run other functions
-# the function names can be referenced from lambda/extract/handler.py and lambda/transform/handler.py
+
 ./run_local_infra.sh
-# Lambda invocation
-curl -X POST \
-  "http://localhost:9002/2015-03-31/functions/function/invocations" \
-  -d '{
-    "log_level": "DEBUG"
-    "city": "NewYork",
-    "lat": 40.7698,
-    "lon": -73.9748,
-    "ts": "2026-04-03T14:27:00Z",
-    "rad": 12000,
-  }'
+
+./run_integration_test.sh
 ```
 
 ## Roadmap
@@ -183,11 +187,11 @@ Planning
 - Retry / DLQ strategy
 
 Implementation
-- Pipeline components
-- Ingestion (Lambda)
-- Transformation
-- Storage (S3 layout)
-- Integration tests
+- [ ] Pipeline components
+- [x] Ingestion (Lambda)
+- [x] Transformation
+- [x] Storage (S3 layout)
+- [x] Integration tests
 
 Cloud Infra
 - CloudFormation templates

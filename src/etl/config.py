@@ -49,9 +49,7 @@ def init(event: dict) -> ETLConfig:
     """
     import os
 
-    from etl.common import get_environment, get_s3_client, is_valid_event
-
-    is_prod = get_environment()
+    from etl.common import is_prod, get_s3_client, is_valid_event
 
     if not is_valid_event(event):
         raise ValueError(
@@ -75,10 +73,10 @@ def init(event: dict) -> ETLConfig:
             "aws_secret_access_key": os.environ.get("S3_SECRET_ACCESS_KEY"),
             "region_name": os.environ.get("S3_REGION_NAME"),
         },
-        is_prod=is_prod,
+        is_prod=is_prod(),
     )
 
-    if is_prod:
+    if config.is_prod:
         config.client = get_s3_client(config.s3_config)
 
     return config

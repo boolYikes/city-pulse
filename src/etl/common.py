@@ -37,7 +37,10 @@ def check_file_exists(path: str, config: ETLConfig) -> bool:
     Checks if file exists in s3 or locally based on environment
     """
     if config.is_prod:
-        obj = get_s3_object(config.client, bucket=config.bucket, key=path)
+        try:
+            obj = get_s3_object(config.client, bucket=config.bucket, key=path)
+        except Exception as e:
+            config.logger.debug(e)  # need to convert plain error to a meaningful one
         return obj is not None
     return Path(path).exists()
 
@@ -95,11 +98,11 @@ def put_s3_object(client, bucket: str, key: str, data: bytes):
         print(f"Error uploading object {key} to bucket {bucket}: {e}")
 
 
-def get_environment():
+def is_prod():
     truthy = {"1", "true", "t", "yes", "y"}
     falsy = {"0", "false", "f", "no", "n"}
 
-    env = os.environ.get("environment")
+    env = os.environ.get("IS_PROD")
     IS_TEST = env.strip().lower()
 
     if IS_TEST in truthy:
